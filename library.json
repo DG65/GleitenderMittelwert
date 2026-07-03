@@ -2,7 +2,7 @@
   "id": "{E52A0AC2-D2DD-4B7D-97BC-CC07AD8DD1AA}",
   "author": "Dietmar Gureth",
   "name": "Gleitender Mittelwert für IP-Symcon",
-  "url": "https://github.com/DG65/RollingAverage",
+  "url": "https://github.com/DG65/GleitenderMittelwert",
   "compatibility": {
     "version": "9.0"
   },
