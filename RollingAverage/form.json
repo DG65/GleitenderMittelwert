@@ -1,0 +1,70 @@
+{
+  "elements": [
+    {
+      "type": "NumberSpinner",
+      "name": "TickInterval",
+      "caption": "Abtastintervall (Sekunden)",
+      "minimum": 1,
+      "maximum": 3600,
+      "suffix": "s"
+    },
+    {
+      "type": "List",
+      "name": "Channels",
+      "caption": "Mittelwert-Kanäle",
+      "add": true,
+      "delete": true,
+      "columns": [
+        {
+          "caption": "Bezeichnung",
+          "name": "Caption",
+          "width": "220px",
+          "add": "Neuer Mittelwert",
+          "edit": {
+            "type": "ValidationTextBox"
+          },
+          "save": true
+        },
+        {
+          "caption": "Quelle",
+          "name": "SourceID",
+          "width": "300px",
+          "add": 0,
+          "edit": {
+            "type": "SelectVariable"
+          },
+          "save": true
+        },
+        {
+          "caption": "Fenster (Minuten)",
+          "name": "WindowMinutes",
+          "width": "150px",
+          "add": 10,
+          "edit": {
+            "type": "NumberSpinner",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "save": true
+        }
+      ]
+    },
+    {
+      "type": "Label",
+      "caption": "Pro Kanal werden zwei Variablen angelegt: der Mittelwert (Anzeige) und ein versteckter Ringpuffer (interner Zwischenspeicher, kein Archiv nötig)."
+    }
+  ],
+  "actions": [],
+  "status": [
+    {
+      "code": 102,
+      "icon": "active",
+      "caption": "Aktiv."
+    },
+    {
+      "code": 104,
+      "icon": "inactive",
+      "caption": "Keine Kanäle konfiguriert."
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "{83996C8A-1C77-424B-81D3-0A4AFFE54263}",
+  "name": "RollingAverage",
+  "type": 3,
+  "vendor": "IP-Symcon",
+  "aliases": [
+    "Gleitender Mittelwert"
+  ],
+  "url": "https://github.com/DG65/RollingAverage",
+  "parentRequirements": [],
+  "childRequirements": [],
+  "implemented": [],
+  "prefix": "RAVG"
+}
