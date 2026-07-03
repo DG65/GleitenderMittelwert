@@ -9,116 +9,156 @@
       "suffix": "s"
     },
     {
-      "type": "List",
-      "name": "Channels",
-      "caption": "Mittelwert-Kanäle",
-      "add": true,
-      "delete": true,
-      "changeOrder": true,
-      "columns": [
+      "type": "RowLayout",
+      "items": [
         {
-          "caption": "Bezeichnung",
-          "name": "Caption",
-          "width": "200px",
-          "add": "Neuer Mittelwert",
-          "edit": {
-            "type": "ValidationTextBox"
-          },
-          "save": true
+          "type": "List",
+          "name": "Channels",
+          "caption": "Mittelwert-Kanäle",
+          "add": true,
+          "delete": true,
+          "changeOrder": true,
+          "columns": [
+            {
+              "caption": "Bezeichnung",
+              "name": "Caption",
+              "width": "200px",
+              "add": "Neuer Mittelwert",
+              "edit": {
+                "type": "ValidationTextBox"
+              },
+              "save": true
+            },
+            {
+              "caption": "Quelle",
+              "name": "SourceID",
+              "width": "260px",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              },
+              "save": true
+            },
+            {
+              "caption": "Fenster",
+              "name": "WindowValue",
+              "width": "90px",
+              "add": 10,
+              "edit": {
+                "type": "NumberSpinner",
+                "minimum": 1,
+                "maximum": 100000
+              },
+              "save": true
+            },
+            {
+              "caption": "Einheit",
+              "name": "WindowUnit",
+              "width": "130px",
+              "add": 1,
+              "edit": {
+                "type": "Select",
+                "options": [
+                  {
+                    "caption": "Sekunden",
+                    "value": 0
+                  },
+                  {
+                    "caption": "Minuten",
+                    "value": 1
+                  },
+                  {
+                    "caption": "Stunden",
+                    "value": 2
+                  },
+                  {
+                    "caption": "Tage",
+                    "value": 3
+                  }
+                ]
+              },
+              "save": true
+            },
+            {
+              "caption": "Methode",
+              "name": "Mode",
+              "width": "140px",
+              "add": 0,
+              "edit": {
+                "type": "Select",
+                "options": [
+                  {
+                    "caption": "Arithmetisch",
+                    "value": 0
+                  },
+                  {
+                    "caption": "Zeitgewichtet",
+                    "value": 1
+                  },
+                  {
+                    "caption": "Median",
+                    "value": 2
+                  },
+                  {
+                    "caption": "Minimum",
+                    "value": 3
+                  },
+                  {
+                    "caption": "Maximum",
+                    "value": 4
+                  },
+                  {
+                    "caption": "Standardabweichung",
+                    "value": 5
+                  },
+                  {
+                    "caption": "Exponentiell (EMA)",
+                    "value": 6
+                  },
+                  {
+                    "caption": "Summe",
+                    "value": 7
+                  }
+                ]
+              },
+              "save": true
+            }
+          ]
         },
         {
-          "caption": "Quelle",
-          "name": "SourceID",
-          "width": "260px",
-          "add": 0,
-          "edit": {
-            "type": "SelectVariable"
-          },
-          "save": true
-        },
-        {
-          "caption": "Fenster",
-          "name": "WindowValue",
-          "width": "90px",
-          "add": 10,
-          "edit": {
-            "type": "NumberSpinner",
-            "minimum": 1,
-            "maximum": 100000
-          },
-          "save": true
-        },
-        {
-          "caption": "Einheit",
-          "name": "WindowUnit",
-          "width": "130px",
-          "add": 1,
-          "edit": {
-            "type": "Select",
-            "options": [
-              {
-                "caption": "Sekunden",
-                "value": 0
-              },
-              {
-                "caption": "Minuten",
-                "value": 1
-              },
-              {
-                "caption": "Stunden",
-                "value": 2
-              },
-              {
-                "caption": "Tage",
-                "value": 3
-              }
-            ]
-          },
-          "save": true
-        },
-        {
-          "caption": "Methode",
-          "name": "Mode",
-          "width": "140px",
-          "add": 0,
-          "edit": {
-            "type": "Select",
-            "options": [
-              {
-                "caption": "Arithmetisch",
-                "value": 0
-              },
-              {
-                "caption": "Zeitgewichtet",
-                "value": 1
-              },
-              {
-                "caption": "Median",
-                "value": 2
-              },
-              {
-                "caption": "Minimum",
-                "value": 3
-              },
-              {
-                "caption": "Maximum",
-                "value": 4
-              },
-              {
-                "caption": "Standardabweichung",
-                "value": 5
-              },
-              {
-                "caption": "Exponentiell (EMA)",
-                "value": 6
-              },
-              {
-                "caption": "Summe",
-                "value": 7
-              }
-            ]
-          },
-          "save": true
+          "type": "ExpansionPanel",
+          "caption": "Doku: Berechnungsmethoden",
+          "expanded": true,
+          "items": [
+            {
+              "type": "Label",
+              "caption": "Arithmetisch: jeder Wert zählt gleich viel."
+            },
+            {
+              "type": "Label",
+              "caption": "Zeitgewichtet: Wert zählt nach Gültigkeitsdauer, robust bei unregelmäßiger Taktung."
+            },
+            {
+              "type": "Label",
+              "caption": "Median: mittlerer Wert, robust gegen Ausreißer."
+            },
+            {
+              "type": "Label",
+              "caption": "Minimum / Maximum: kleinster bzw. größter Wert im Fenster."
+            },
+            {
+              "type": "Label",
+              "caption": "Standardabweichung: Maß für Schwankung/Rauschen der Werte."
+            },
+            {
+              "type": "Label",
+              "caption": "Exponentiell (EMA): neuere Werte zählen stärker, Fenster = Zeitkonstante."
+            },
+            {
+              "type": "Label",
+              "caption": "Summe: aufsummierte statt gemittelte Werte im Fenster."
+            }
+          ]
         }
       ]
     },
