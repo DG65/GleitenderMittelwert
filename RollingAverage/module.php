@@ -8,6 +8,7 @@ class RollingAverage extends IPSModule
 
         $this->RegisterPropertyInteger('TickInterval', 10);
         $this->RegisterPropertyString('Channels', '[]');
+        $this->RegisterAttributeInteger('NextRowID', 1);
 
         $this->RegisterTimer('Tick', 0, 'RAVG_Tick($_IPS[\'TARGET\']);');
     }
@@ -26,29 +27,58 @@ class RollingAverage extends IPSModule
             $channels = [];
         }
 
+        // Jede Zeile bekommt EINMALIG eine feste, von der Listenposition
+        // unabhängige RowID. Dadurch bleiben Variable und Ringpuffer beim
+        // Verschieben/Umsortieren der Liste korrekt zugeordnet.
+        $nextID = $this->ReadAttributeInteger('NextRowID');
+        $changed = false;
         foreach ($channels as $i => $ch) {
-            $caption = ($ch['Caption'] ?? '') !== '' ? $ch['Caption'] : ('Mittelwert ' . ($i + 1));
+            if (empty($ch['RowID'])) {
+                $channels[$i]['RowID'] = $nextID++;
+                $changed = true;
+            }
+        }
+        if ($changed) {
+            $this->WriteAttributeInteger('NextRowID', $nextID);
+            IPS_SetProperty($this->InstanceID, 'Channels', json_encode($channels));
+        }
 
-            $vid = @$this->GetIDForIdent('avg_' . $i);
+        $activeIdents = [];
+        foreach ($channels as $ch) {
+            $rid = $ch['RowID'];
+            $ident = 'avg_' . $rid;
+            $bufIdent = 'buf_' . $rid;
+            $activeIdents[] = $ident;
+            $activeIdents[] = $bufIdent;
+
+            $caption = ($ch['Caption'] ?? '') !== '' ? $ch['Caption'] : ('Mittelwert ' . $rid);
+
+            $vid = @$this->GetIDForIdent($ident);
             if (!$vid) {
-                $vid = $this->RegisterVariableFloat('avg_' . $i, $caption, '', $i * 2);
+                $vid = $this->RegisterVariableFloat($ident, $caption, '', $rid * 2);
             }
             IPS_SetName($vid, $caption);
+            IPS_SetPosition($vid, $rid * 2);
 
-            $bid = @$this->GetIDForIdent('buf_' . $i);
+            $bid = @$this->GetIDForIdent($bufIdent);
             if (!$bid) {
-                $bid = $this->RegisterVariableString('buf_' . $i, $caption . ' (Puffer)', '', $i * 2 + 1);
+                $bid = $this->RegisterVariableString($bufIdent, $caption . ' (Puffer)', '', $rid * 2 + 1);
                 SetValueString($bid, '[]');
             }
             IPS_SetHidden($bid, true);
+            IPS_SetPosition($bid, $rid * 2 + 1);
         }
 
-        // überzählige Kanäle aus einer früheren, längeren Konfiguration entfernen
-        $i = count($channels);
-        while (@$this->GetIDForIdent('avg_' . $i)) {
-            $this->UnregisterVariable('avg_' . $i);
-            $this->UnregisterVariable('buf_' . $i);
-            $i++;
+        // Kanäle, deren Zeile gelöscht wurde, aufräumen
+        foreach ($this->FindOwnIdentsWithPrefix('avg_') as $ident) {
+            if (!in_array($ident, $activeIdents)) {
+                $this->UnregisterVariable($ident);
+            }
+        }
+        foreach ($this->FindOwnIdentsWithPrefix('buf_') as $ident) {
+            if (!in_array($ident, $activeIdents)) {
+                $this->UnregisterVariable($ident);
+            }
         }
 
         if (count($channels) === 0) {
@@ -69,15 +99,19 @@ class RollingAverage extends IPSModule
         }
 
         $now = time();
-        foreach ($channels as $i => $ch) {
+        foreach ($channels as $ch) {
+            $rid = $ch['RowID'] ?? null;
+            if ($rid === null) {
+                continue;
+            }
             $srcID = (int)($ch['SourceID'] ?? 0);
             $windowSec = max(1, (int)($ch['WindowMinutes'] ?? 10)) * 60;
             if (!$srcID || !IPS_VariableExists($srcID)) {
                 continue;
             }
 
-            $vid = @$this->GetIDForIdent('avg_' . $i);
-            $bid = @$this->GetIDForIdent('buf_' . $i);
+            $vid = @$this->GetIDForIdent('avg_' . $rid);
+            $bid = @$this->GetIDForIdent('buf_' . $rid);
             if (!$vid || !$bid) {
                 continue;
             }
@@ -100,5 +134,17 @@ class RollingAverage extends IPSModule
                 SetValueFloat($vid, $sum / $count);
             }
         }
+    }
+
+    private function FindOwnIdentsWithPrefix(string $prefix): array
+    {
+        $result = [];
+        foreach (IPS_GetChildrenIDs($this->InstanceID) as $cid) {
+            $ident = IPS_GetObject($cid)['ObjectIdent'];
+            if ($ident !== '' && strpos($ident, $prefix) === 0) {
+                $result[] = $ident;
+            }
+        }
+        return $result;
     }
 }
