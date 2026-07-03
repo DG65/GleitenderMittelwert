@@ -14,6 +14,7 @@
       "caption": "Mittelwert-Kanäle",
       "add": true,
       "delete": true,
+      "changeOrder": true,
       "columns": [
         {
           "caption": "Bezeichnung",
