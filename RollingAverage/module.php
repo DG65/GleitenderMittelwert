@@ -161,31 +161,69 @@ class RollingAverage extends IPSModule
             SetValueString($bid, json_encode($buffer));
 
             $mode = (int)($ch['Mode'] ?? 0);
-            $avg = $this->ComputeAverage($buffer, $mode, $now);
+            $avg = $this->ComputeAverage($buffer, $mode, $now, $windowSec);
             if ($avg !== null) {
                 SetValueFloat($vid, $avg);
             }
         }
     }
 
-    // Mode 0 = arithmetisch (jeder Messpunkt zählt gleich viel).
-    // Mode 1 = zeitgewichtet (jeder Messpunkt zählt proportional zu der
-    // Zeitspanne, in der sein Wert galt — bis zum nächsten Sample bzw.
-    // bis jetzt beim letzten Sample). Robuster bei unregelmäßiger
-    // Taktung (verpasste Ticks, Neustart, unterschiedliche Update-
-    // Intervalle der Quelle).
-    private function ComputeAverage(array $buffer, int $mode, int $now): ?float
+    // Mode 0 = Arithmetisch, 1 = Zeitgewichtet, 2 = Median, 3 = Minimum,
+    // 4 = Maximum, 5 = Standardabweichung, 6 = Exponentiell (EMA),
+    // 7 = Summe. Alle Methoden arbeiten auf demselben Ringpuffer
+    // [[Zeitstempel, Wert], ...] innerhalb des konfigurierten Fensters.
+    private function ComputeAverage(array $buffer, int $mode, int $now, int $windowSec): ?float
     {
         $count = count($buffer);
         if ($count === 0) {
             return null;
         }
+        $values = array_column($buffer, 1);
 
-        if ($mode !== 1) {
-            $sum = array_sum(array_column($buffer, 1));
-            return $sum / $count;
+        switch ($mode) {
+            case 1:
+                return $this->TimeWeightedAverage($buffer, $now);
+
+            case 2: // Median
+                sort($values);
+                $mid = intdiv($count, 2);
+                if ($count % 2 === 0) {
+                    return ($values[$mid - 1] + $values[$mid]) / 2;
+                }
+                return $values[$mid];
+
+            case 3: // Minimum
+                return min($values);
+
+            case 4: // Maximum
+                return max($values);
+
+            case 5: // Standardabweichung
+                $mean = array_sum($values) / $count;
+                $variance = array_sum(array_map(function ($v) use ($mean) {
+                    return ($v - $mean) ** 2;
+                }, $values)) / $count;
+                return sqrt($variance);
+
+            case 6: // Exponentiell gewichteter Mittelwert (EMA)
+                return $this->ExponentialMovingAverage($buffer, $windowSec);
+
+            case 7: // Summe
+                return array_sum($values);
+
+            default: // Arithmetisch
+                return array_sum($values) / $count;
         }
+    }
 
+    // Jeder Messpunkt zählt proportional zu der Zeitspanne, in der sein
+    // Wert galt — bis zum nächsten Sample bzw. bis jetzt beim letzten.
+    // Robuster bei unregelmäßiger Taktung (verpasste Ticks, Neustart,
+    // unterschiedliche Update-Intervalle der Quelle) als der einfache
+    // arithmetische Mittelwert.
+    private function TimeWeightedAverage(array $buffer, int $now): ?float
+    {
+        $count = count($buffer);
         $weightedSum = 0.0;
         $totalWeight = 0.0;
         for ($i = 0; $i < $count; $i++) {
@@ -202,5 +240,27 @@ class RollingAverage extends IPSModule
         }
         // Nur ein Sample ohne Zeitspanne (z.B. gerade erst angelegt)
         return $buffer[$count - 1][1];
+    }
+
+    // Neuere Werte zählen stärker als ältere. Das Fenster dient als
+    // Zeitkonstante (Tau): je größer das Fenster, desto träger reagiert
+    // der EMA auf neue Werte.
+    private function ExponentialMovingAverage(array $buffer, int $windowSec): ?float
+    {
+        $tau = max(1, $windowSec);
+        $ema = null;
+        $prevT = null;
+        foreach ($buffer as $point) {
+            [$t, $v] = $point;
+            if ($ema === null) {
+                $ema = $v;
+            } else {
+                $dt = max(0, $t - $prevT);
+                $alpha = 1 - exp(-$dt / $tau);
+                $ema = $ema + $alpha * ($v - $ema);
+            }
+            $prevT = $t;
+        }
+        return $ema;
     }
 }

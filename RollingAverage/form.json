@@ -91,6 +91,30 @@
               {
                 "caption": "Zeitgewichtet",
                 "value": 1
+              },
+              {
+                "caption": "Median",
+                "value": 2
+              },
+              {
+                "caption": "Minimum",
+                "value": 3
+              },
+              {
+                "caption": "Maximum",
+                "value": 4
+              },
+              {
+                "caption": "Standardabweichung",
+                "value": 5
+              },
+              {
+                "caption": "Exponentiell (EMA)",
+                "value": 6
+              },
+              {
+                "caption": "Summe",
+                "value": 7
               }
             ]
           },

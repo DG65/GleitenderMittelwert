@@ -41,16 +41,21 @@ Pro Kanal:
 | Quelle | Die zu mittelnde Variable |
 | Fenster | Zahlenwert der Fenster-Dauer |
 | Einheit | Sekunden / Minuten / Stunden / Tage |
-| Methode | Arithmetisch oder Zeitgewichtet (siehe unten) |
+| Methode | Berechnungsart (siehe unten) |
 
 Zeilen können per Drag & Drop umsortiert werden.
 
-### Arithmetisch vs. Zeitgewichtet
+### Berechnungsmethoden
+
+Alle Methoden arbeiten auf denselben gepufferten Werten im konfigurierten Fenster — nur die Art der Zusammenfassung unterscheidet sich.
 
 - **Arithmetisch**: Jeder gesampelte Wert zählt gleich viel (Summe geteilt durch Anzahl). Einfach und für die meisten Fälle ausreichend, solange das Abtastintervall zuverlässig eingehalten wird.
-- **Zeitgewichtet**: Jeder Wert zählt proportional zu der Zeitspanne, in der er tatsächlich galt (bis zum nächsten Sample bzw. bis jetzt beim letzten). Dadurch verzerren verpasste Ticks, ein Neustart der Instanz oder unregelmäßige Abtastung das Ergebnis nicht — der Mittelwert entspricht dem tatsächlichen Zeitintegral über das Fenster, nicht nur dem Durchschnitt der Stichproben.
-
-Im Regelfall liefern beide Methoden nahezu identische Ergebnisse; der Unterschied wird erst bei unregelmäßiger Taktung relevant.
+- **Zeitgewichtet**: Jeder Wert zählt proportional zu der Zeitspanne, in der er tatsächlich galt (bis zum nächsten Sample bzw. bis jetzt beim letzten). Dadurch verzerren verpasste Ticks, ein Neustart der Instanz oder unregelmäßige Abtastung das Ergebnis nicht — der Mittelwert entspricht dem tatsächlichen Zeitintegral über das Fenster, nicht nur dem Durchschnitt der Stichproben. Im Regelfall liefern Arithmetisch und Zeitgewichtet nahezu identische Ergebnisse; der Unterschied wird erst bei unregelmäßiger Taktung relevant.
+- **Median**: Der mittlere Wert der sortierten Stichproben. Robust gegen einzelne Ausreißer/Messfehler — ein kurzer Spike verzerrt den Wert nicht wie beim arithmetischen Mittel.
+- **Minimum** / **Maximum**: Kleinster bzw. größter Wert im Fenster — z. B. Spitzenlast der letzten 10 Minuten oder niedrigster SOC-Wert über Nacht.
+- **Standardabweichung**: Maß für die Schwankung/das Rauschen der Werte im Fenster selbst, nicht für deren mittleres Niveau.
+- **Exponentiell (EMA)**: Neuere Werte zählen stärker als ältere (exponentiell abklingende Gewichtung). Das Fenster dient dabei als Zeitkonstante — größeres Fenster = träger reagierender Wert. Reagiert schneller auf echte Änderungen als ein starres Zeitfenster.
+- **Summe**: Aufsummierte Werte im Fenster statt eines Mittelwerts — beantwortet eine andere Frage (z. B. Gesamtenergie der letzten Stunde statt Durchschnittsleistung).
 
 Pro Kanal legt das Modul zwei Variablen an:
 
