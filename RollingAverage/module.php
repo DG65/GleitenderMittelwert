@@ -60,6 +60,16 @@ class RollingAverage extends IPSModule
             IPS_SetName($vid, $caption);
             IPS_SetPosition($vid, $rid * 2);
 
+            // Mittelwert bekommt dasselbe Profil (Einheit/Format) wie die Quelle
+            $srcID = (int)($ch['SourceID'] ?? 0);
+            if ($srcID && IPS_VariableExists($srcID)) {
+                $srcVar = IPS_GetVariable($srcID);
+                $profile = $srcVar['VariableCustomProfile'] !== '' ? $srcVar['VariableCustomProfile'] : $srcVar['VariableProfile'];
+                if ($profile !== '') {
+                    IPS_SetVariableCustomProfile($vid, $profile);
+                }
+            }
+
             $bid = @$this->GetIDForIdent($bufIdent);
             if (!$bid) {
                 $bid = $this->RegisterVariableString($bufIdent, $caption . ' (Puffer)', '', $rid * 2 + 1);
