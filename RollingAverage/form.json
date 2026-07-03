@@ -75,6 +75,26 @@
             ]
           },
           "save": true
+        },
+        {
+          "caption": "Methode",
+          "name": "Mode",
+          "width": "140px",
+          "add": 0,
+          "edit": {
+            "type": "Select",
+            "options": [
+              {
+                "caption": "Arithmetisch",
+                "value": 0
+              },
+              {
+                "caption": "Zeitgewichtet",
+                "value": 1
+              }
+            ]
+          },
+          "save": true
         }
       ]
     },

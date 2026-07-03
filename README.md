@@ -41,8 +41,16 @@ Pro Kanal:
 | Quelle | Die zu mittelnde Variable |
 | Fenster | Zahlenwert der Fenster-Dauer |
 | Einheit | Sekunden / Minuten / Stunden / Tage |
+| Methode | Arithmetisch oder Zeitgewichtet (siehe unten) |
 
 Zeilen können per Drag & Drop umsortiert werden.
+
+### Arithmetisch vs. Zeitgewichtet
+
+- **Arithmetisch**: Jeder gesampelte Wert zählt gleich viel (Summe geteilt durch Anzahl). Einfach und für die meisten Fälle ausreichend, solange das Abtastintervall zuverlässig eingehalten wird.
+- **Zeitgewichtet**: Jeder Wert zählt proportional zu der Zeitspanne, in der er tatsächlich galt (bis zum nächsten Sample bzw. bis jetzt beim letzten). Dadurch verzerren verpasste Ticks, ein Neustart der Instanz oder unregelmäßige Abtastung das Ergebnis nicht — der Mittelwert entspricht dem tatsächlichen Zeitintegral über das Fenster, nicht nur dem Durchschnitt der Stichproben.
+
+Im Regelfall liefern beide Methoden nahezu identische Ergebnisse; der Unterschied wird erst bei unregelmäßiger Taktung relevant.
 
 Pro Kanal legt das Modul zwei Variablen an:
 

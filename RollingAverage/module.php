@@ -160,11 +160,47 @@ class RollingAverage extends IPSModule
 
             SetValueString($bid, json_encode($buffer));
 
-            $count = count($buffer);
-            if ($count > 0) {
-                $sum = array_sum(array_column($buffer, 1));
-                SetValueFloat($vid, $sum / $count);
+            $mode = (int)($ch['Mode'] ?? 0);
+            $avg = $this->ComputeAverage($buffer, $mode, $now);
+            if ($avg !== null) {
+                SetValueFloat($vid, $avg);
             }
         }
+    }
+
+    // Mode 0 = arithmetisch (jeder Messpunkt zählt gleich viel).
+    // Mode 1 = zeitgewichtet (jeder Messpunkt zählt proportional zu der
+    // Zeitspanne, in der sein Wert galt — bis zum nächsten Sample bzw.
+    // bis jetzt beim letzten Sample). Robuster bei unregelmäßiger
+    // Taktung (verpasste Ticks, Neustart, unterschiedliche Update-
+    // Intervalle der Quelle).
+    private function ComputeAverage(array $buffer, int $mode, int $now): ?float
+    {
+        $count = count($buffer);
+        if ($count === 0) {
+            return null;
+        }
+
+        if ($mode !== 1) {
+            $sum = array_sum(array_column($buffer, 1));
+            return $sum / $count;
+        }
+
+        $weightedSum = 0.0;
+        $totalWeight = 0.0;
+        for ($i = 0; $i < $count; $i++) {
+            $t = $buffer[$i][0];
+            $v = $buffer[$i][1];
+            $tNext = ($i + 1 < $count) ? $buffer[$i + 1][0] : $now;
+            $weight = max(0, $tNext - $t);
+            $weightedSum += $v * $weight;
+            $totalWeight += $weight;
+        }
+
+        if ($totalWeight > 0) {
+            return $weightedSum / $totalWeight;
+        }
+        // Nur ein Sample ohne Zeitspanne (z.B. gerade erst angelegt)
+        return $buffer[$count - 1][1];
     }
 }
