@@ -53,12 +53,14 @@ class RollingAverage extends IPSModule
 
             $caption = ($ch['Caption'] ?? '') !== '' ? $ch['Caption'] : ('Mittelwert ' . $rid);
 
-            $vid = @$this->GetIDForIdent($ident);
+            // rekursive Suche statt GetIDForIdent: die Variable darf vom
+            // Nutzer frei im Objektbaum verschoben werden (z.B. in eine
+            // eigene Kategorie), ohne dass eine doppelte neu angelegt wird.
+            $vid = $this->FindVarByIdent($ident);
             if (!$vid) {
                 $vid = $this->RegisterVariableFloat($ident, $caption, '', $rid * 2);
             }
             IPS_SetName($vid, $caption);
-            IPS_SetPosition($vid, $rid * 2);
 
             // Mittelwert bekommt dasselbe Profil (Einheit/Format) wie die Quelle
             $srcID = (int)($ch['SourceID'] ?? 0);
@@ -70,24 +72,23 @@ class RollingAverage extends IPSModule
                 }
             }
 
-            $bid = @$this->GetIDForIdent($bufIdent);
+            $bid = $this->FindVarByIdent($bufIdent);
             if (!$bid) {
                 $bid = $this->RegisterVariableString($bufIdent, $caption . ' (Puffer)', '', $rid * 2 + 1);
                 SetValueString($bid, '[]');
             }
             IPS_SetHidden($bid, true);
-            IPS_SetPosition($bid, $rid * 2 + 1);
         }
 
         // Kanäle, deren Zeile gelöscht wurde, aufräumen
-        foreach ($this->FindOwnIdentsWithPrefix('avg_') as $ident) {
+        foreach ($this->FindOwnIdentsWithPrefix('avg_') as $ident => $id) {
             if (!in_array($ident, $activeIdents)) {
-                $this->UnregisterVariable($ident);
+                IPS_DeleteVariable($id);
             }
         }
-        foreach ($this->FindOwnIdentsWithPrefix('buf_') as $ident) {
+        foreach ($this->FindOwnIdentsWithPrefix('buf_') as $ident => $id) {
             if (!in_array($ident, $activeIdents)) {
-                $this->UnregisterVariable($ident);
+                IPS_DeleteVariable($id);
             }
         }
 
@@ -120,8 +121,8 @@ class RollingAverage extends IPSModule
                 continue;
             }
 
-            $vid = @$this->GetIDForIdent('avg_' . $rid);
-            $bid = @$this->GetIDForIdent('buf_' . $rid);
+            $vid = $this->FindVarByIdent('avg_' . $rid);
+            $bid = $this->FindVarByIdent('buf_' . $rid);
             if (!$vid || !$bid) {
                 continue;
             }
@@ -146,15 +147,50 @@ class RollingAverage extends IPSModule
         }
     }
 
+    // Variablen dürfen vom Nutzer frei im Objektbaum verschoben werden
+    // (z.B. in eine eigene Kategorie einsortiert) — GetIDForIdent findet
+    // nur direkte Kinder der Instanz, daher rekursive Suche.
+    private function FindVarByIdent(string $ident): int
+    {
+        return $this->FindIdentRecursive($this->InstanceID, $ident);
+    }
+
+    private function FindIdentRecursive(int $parentID, string $ident): int
+    {
+        foreach (IPS_GetChildrenIDs($parentID) as $childID) {
+            $obj = IPS_GetObject($childID);
+            if ($obj['ObjectIdent'] === $ident) {
+                return $childID;
+            }
+            if ($obj['ObjectType'] === 0) {
+                $found = $this->FindIdentRecursive($childID, $ident);
+                if ($found) {
+                    return $found;
+                }
+            }
+        }
+        return 0;
+    }
+
+    // liefert [ident => objectID] für alle eigenen (auch verschobenen)
+    // Variablen mit dem gegebenen Ident-Präfix
     private function FindOwnIdentsWithPrefix(string $prefix): array
     {
         $result = [];
-        foreach (IPS_GetChildrenIDs($this->InstanceID) as $cid) {
-            $ident = IPS_GetObject($cid)['ObjectIdent'];
-            if ($ident !== '' && strpos($ident, $prefix) === 0) {
-                $result[] = $ident;
+        $this->CollectIdentsWithPrefix($this->InstanceID, $prefix, $result);
+        return $result;
+    }
+
+    private function CollectIdentsWithPrefix(int $parentID, string $prefix, array &$result): void
+    {
+        foreach (IPS_GetChildrenIDs($parentID) as $childID) {
+            $obj = IPS_GetObject($childID);
+            if ($obj['ObjectIdent'] !== '' && strpos($obj['ObjectIdent'], $prefix) === 0) {
+                $result[$obj['ObjectIdent']] = $childID;
+            }
+            if ($obj['ObjectType'] === 0) {
+                $this->CollectIdentsWithPrefix($childID, $prefix, $result);
             }
         }
-        return $result;
     }
 }
