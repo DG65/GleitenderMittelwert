@@ -2,6 +2,16 @@
 
 IP-Symcon-Modul zur Berechnung gleitender Mittelwerte beliebiger Variablen — konfigurierbar über eine Liste von Kanälen, ganz ohne Abhängigkeit vom Archiv-System.
 
+## Wofür braucht man das?
+
+Rohe Live-Messwerte schwanken oft stärker, als es für Anzeige oder Steuerung sinnvoll ist. Ein gleitender Mittelwert glättet solche Schwankungen, ohne auf eine feste Zeitreihe (Stunde/Tag) beschränkt zu sein wie bei der Archiv-Aggregation. Typische Anwendungsfälle:
+
+- **PV-/Batterieleistung glätten**: Wolken oder kurzzeitige Lastspitzen lassen die Momentanleistung springen; ein 5- oder 10-Minuten-Mittel gibt ein ruhigeres, aussagekräftigeres Bild für Anzeige oder Kachel.
+- **Steuerungsentscheidungen entkoppeln**: Ein EMS, das z. B. Batterieladung an die Netzeinspeisung koppelt, sollte nicht auf jede Sekundenspitze reagieren (Regel-"Flattern", unnötige Schaltzyklen) — ein gemittelter Wert als Entscheidungsgrundlage ist stabiler.
+- **Sensorrauschen filtern**: Temperatur-, Einstrahlungs- oder Leistungssensoren mit Messrauschen liefern über ein Zeitfenster gemittelt einen deutlich saubereren Wert.
+- **Trends statt Momentaufnahmen**: Eine 24-Stunden-Außentemperatur oder ein 15-Minuten-Solar­einstrahlungswert zeigt die Tendenz, ohne dass ein einzelner Ausreißer die Anzeige verzerrt.
+- **Überschussberechnung**: Mehrere geglättete Werte lassen sich kombinieren (z. B. PV-Überschuss = gemittelte Erzeugung minus gemittelter Verbrauch), ohne dass Momentan-Rauschen beider Seiten sich gegenseitig verstärkt.
+
 ## Warum kein Archiv?
 
 Der naheliegende Ansatz für einen gleitenden Mittelwert ist `AC_GetLoggedValues` über die letzten N Minuten. Das hat in der Praxis zwei Nachteile:
