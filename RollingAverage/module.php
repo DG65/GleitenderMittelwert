@@ -2,14 +2,20 @@
 
 class RollingAverage extends IPSModule
 {
+    private const UNIT_SECONDS = [0 => 1, 1 => 60, 2 => 3600, 3 => 86400];
+
     public function Create()
     {
         parent::Create();
 
         $this->RegisterPropertyInteger('TickInterval', 10);
         $this->RegisterPropertyString('Channels', '[]');
-        $this->RegisterAttributeInteger('NextRowID', 1);
-        $this->RegisterAttributeString('KnownVarIDs', '[]');
+
+        // Zuordnung Kanal -> tatsächliche Variablen-IDs. Bewusst ein
+        // Attribut (nicht Teil der Channels-Property!) — würde man das
+        // stattdessen in die listengebundene Channels-Property zurück-
+        // schreiben, sperrt das in IP-Symcon das Drag & Drop der Liste.
+        $this->RegisterAttributeString('ChannelState', '[]');
 
         $this->RegisterTimer('Tick', 0, 'RAVG_Tick($_IPS[\'TARGET\']);');
     }
@@ -17,6 +23,24 @@ class RollingAverage extends IPSModule
     public function Destroy()
     {
         parent::Destroy();
+    }
+
+    // Stabiler Schlüssel aus Bezeichnung + Quelle. Ändert der Nutzer eine
+    // von beiden bewusst, gilt das als neuer Kanal (alte Variable wird
+    // aufgeräumt) — reines Umsortieren der Zeilen ändert den Schlüssel
+    // dagegen nicht.
+    private function ChannelKey(array $ch): string
+    {
+        return md5(($ch['Caption'] ?? '') . '|' . ($ch['SourceID'] ?? 0));
+    }
+
+    private function WindowSeconds(array $ch): int
+    {
+        $unit = (int)($ch['WindowUnit'] ?? 1);
+        $mult = self::UNIT_SECONDS[$unit] ?? 60;
+        // WindowMinutes = Kompatibilität mit Kanälen aus einer älteren Version
+        $value = (float)($ch['WindowValue'] ?? ($ch['WindowMinutes'] ?? 10));
+        return max(1, (int)round($value * $mult));
     }
 
     public function ApplyChanges()
@@ -28,28 +52,23 @@ class RollingAverage extends IPSModule
             $channels = [];
         }
 
-        $nextID = $this->ReadAttributeInteger('NextRowID');
-        $propChanged = false;
+        $state = json_decode($this->ReadAttributeString('ChannelState'), true);
+        if (!is_array($state)) {
+            $state = [];
+        }
 
+        $newState = [];
+        $seq = 0;
         foreach ($channels as $i => $ch) {
-            // Jede Zeile bekommt EINMALIG eine feste RowID (nur für den
-            // Ident-Namen der neu angelegten Variable relevant).
-            if (empty($ch['RowID'])) {
-                $channels[$i]['RowID'] = $nextID++;
-                $propChanged = true;
-            }
-            $rid = $channels[$i]['RowID'];
-            $caption = ($ch['Caption'] ?? '') !== '' ? $ch['Caption'] : ('Mittelwert ' . $rid);
+            $key = $this->ChannelKey($ch);
+            $caption = ($ch['Caption'] ?? '') !== '' ? $ch['Caption'] : ('Mittelwert ' . ($i + 1));
 
-            // Die tatsächliche Objekt-ID wird direkt in der Konfiguration
-            // gespeichert (AvgID/BufID) — dadurch spielt es KEINE Rolle,
-            // wohin der Nutzer die Variable im Objektbaum verschiebt, auch
-            // nicht in den Baum einer völlig anderen Instanz.
-            $vid = (int)($channels[$i]['AvgID'] ?? 0);
+            $entry = $state[$key] ?? [];
+            $vid = (int)($entry['AvgID'] ?? 0);
+            $bid = (int)($entry['BufID'] ?? 0);
+
             if (!$vid || !IPS_VariableExists($vid)) {
-                $vid = $this->RegisterVariableFloat('avg_' . $rid, $caption, '', $rid * 2);
-                $channels[$i]['AvgID'] = $vid;
-                $propChanged = true;
+                $vid = $this->RegisterVariableFloat('avg_' . $seq, $caption, '', $i * 2);
             }
             IPS_SetName($vid, $caption);
 
@@ -63,42 +82,30 @@ class RollingAverage extends IPSModule
                 }
             }
 
-            $bid = (int)($channels[$i]['BufID'] ?? 0);
             if (!$bid || !IPS_VariableExists($bid)) {
-                $bid = $this->RegisterVariableString('buf_' . $rid, $caption . ' (Puffer)', '', $rid * 2 + 1);
+                $bid = $this->RegisterVariableString('buf_' . $seq, $caption . ' (Puffer)', '', $i * 2 + 1);
                 SetValueString($bid, '[]');
-                $channels[$i]['BufID'] = $bid;
-                $propChanged = true;
             }
             IPS_SetHidden($bid, true);
+
+            $newState[$key] = ['AvgID' => $vid, 'BufID' => $bid];
+            $seq++;
         }
 
-        if ($propChanged) {
-            $this->WriteAttributeInteger('NextRowID', $nextID);
-            IPS_SetProperty($this->InstanceID, 'Channels', json_encode($channels));
-        }
-
-        // Kanäle, deren Zeile gelöscht wurde, aufräumen — unabhängig davon,
-        // wohin die zugehörigen Variablen im Baum verschoben wurden.
-        $activeIDs = [];
-        foreach ($channels as $ch) {
-            if (!empty($ch['AvgID'])) {
-                $activeIDs[] = (int)$ch['AvgID'];
-            }
-            if (!empty($ch['BufID'])) {
-                $activeIDs[] = (int)$ch['BufID'];
+        // Kanäle, deren Zeile gelöscht oder deren Bezeichnung/Quelle
+        // geändert wurde, aufräumen — unabhängig davon, wohin die
+        // zugehörigen Variablen im Baum verschoben wurden.
+        foreach ($state as $key => $entry) {
+            if (!isset($newState[$key])) {
+                if (!empty($entry['AvgID']) && IPS_VariableExists($entry['AvgID'])) {
+                    IPS_DeleteVariable($entry['AvgID']);
+                }
+                if (!empty($entry['BufID']) && IPS_VariableExists($entry['BufID'])) {
+                    IPS_DeleteVariable($entry['BufID']);
+                }
             }
         }
-        $knownIDs = json_decode($this->ReadAttributeString('KnownVarIDs'), true);
-        if (!is_array($knownIDs)) {
-            $knownIDs = [];
-        }
-        foreach ($knownIDs as $oldID) {
-            if (!in_array($oldID, $activeIDs) && IPS_VariableExists($oldID)) {
-                IPS_DeleteVariable($oldID);
-            }
-        }
-        $this->WriteAttributeString('KnownVarIDs', json_encode($activeIDs));
+        $this->WriteAttributeString('ChannelState', json_encode($newState));
 
         if (count($channels) === 0) {
             $this->SetTimerInterval('Tick', 0);
@@ -116,13 +123,23 @@ class RollingAverage extends IPSModule
         if (!is_array($channels)) {
             return;
         }
+        $state = json_decode($this->ReadAttributeString('ChannelState'), true);
+        if (!is_array($state)) {
+            return;
+        }
 
         $now = time();
         foreach ($channels as $ch) {
+            $key = $this->ChannelKey($ch);
+            $entry = $state[$key] ?? null;
+            if (!$entry) {
+                continue;
+            }
+
             $srcID = (int)($ch['SourceID'] ?? 0);
-            $windowSec = max(1, (int)($ch['WindowMinutes'] ?? 10)) * 60;
-            $vid = (int)($ch['AvgID'] ?? 0);
-            $bid = (int)($ch['BufID'] ?? 0);
+            $windowSec = $this->WindowSeconds($ch);
+            $vid = (int)$entry['AvgID'];
+            $bid = (int)$entry['BufID'];
 
             if (!$srcID || !IPS_VariableExists($srcID)) {
                 continue;

@@ -18,7 +18,7 @@
         {
           "caption": "Bezeichnung",
           "name": "Caption",
-          "width": "220px",
+          "width": "200px",
           "add": "Neuer Mittelwert",
           "edit": {
             "type": "ValidationTextBox"
@@ -28,7 +28,7 @@
         {
           "caption": "Quelle",
           "name": "SourceID",
-          "width": "300px",
+          "width": "260px",
           "add": 0,
           "edit": {
             "type": "SelectVariable"
@@ -36,14 +36,42 @@
           "save": true
         },
         {
-          "caption": "Fenster (Minuten)",
-          "name": "WindowMinutes",
-          "width": "150px",
+          "caption": "Fenster",
+          "name": "WindowValue",
+          "width": "90px",
           "add": 10,
           "edit": {
             "type": "NumberSpinner",
             "minimum": 1,
-            "maximum": 1440
+            "maximum": 100000
+          },
+          "save": true
+        },
+        {
+          "caption": "Einheit",
+          "name": "WindowUnit",
+          "width": "130px",
+          "add": 1,
+          "edit": {
+            "type": "Select",
+            "options": [
+              {
+                "caption": "Sekunden",
+                "value": 0
+              },
+              {
+                "caption": "Minuten",
+                "value": 1
+              },
+              {
+                "caption": "Stunden",
+                "value": 2
+              },
+              {
+                "caption": "Tage",
+                "value": 3
+              }
+            ]
           },
           "save": true
         }
@@ -51,7 +79,7 @@
     },
     {
       "type": "Label",
-      "caption": "Pro Kanal werden zwei Variablen angelegt: der Mittelwert (Anzeige) und ein versteckter Ringpuffer (interner Zwischenspeicher, kein Archiv nötig)."
+      "caption": "Pro Kanal werden zwei Variablen angelegt: der Mittelwert (Anzeige) und ein versteckter Ringpuffer (interner Zwischenspeicher, kein Archiv nötig). Zeilen können per Drag & Drop umsortiert werden."
     }
   ],
   "actions": [],
