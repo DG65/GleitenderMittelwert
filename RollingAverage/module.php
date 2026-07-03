@@ -9,6 +9,7 @@ class RollingAverage extends IPSModule
         $this->RegisterPropertyInteger('TickInterval', 10);
         $this->RegisterPropertyString('Channels', '[]');
         $this->RegisterAttributeInteger('NextRowID', 1);
+        $this->RegisterAttributeString('KnownVarIDs', '[]');
 
         $this->RegisterTimer('Tick', 0, 'RAVG_Tick($_IPS[\'TARGET\']);');
     }
@@ -27,38 +28,28 @@ class RollingAverage extends IPSModule
             $channels = [];
         }
 
-        // Jede Zeile bekommt EINMALIG eine feste, von der Listenposition
-        // unabhängige RowID. Dadurch bleiben Variable und Ringpuffer beim
-        // Verschieben/Umsortieren der Liste korrekt zugeordnet.
         $nextID = $this->ReadAttributeInteger('NextRowID');
-        $changed = false;
+        $propChanged = false;
+
         foreach ($channels as $i => $ch) {
+            // Jede Zeile bekommt EINMALIG eine feste RowID (nur für den
+            // Ident-Namen der neu angelegten Variable relevant).
             if (empty($ch['RowID'])) {
                 $channels[$i]['RowID'] = $nextID++;
-                $changed = true;
+                $propChanged = true;
             }
-        }
-        if ($changed) {
-            $this->WriteAttributeInteger('NextRowID', $nextID);
-            IPS_SetProperty($this->InstanceID, 'Channels', json_encode($channels));
-        }
-
-        $activeIdents = [];
-        foreach ($channels as $ch) {
-            $rid = $ch['RowID'];
-            $ident = 'avg_' . $rid;
-            $bufIdent = 'buf_' . $rid;
-            $activeIdents[] = $ident;
-            $activeIdents[] = $bufIdent;
-
+            $rid = $channels[$i]['RowID'];
             $caption = ($ch['Caption'] ?? '') !== '' ? $ch['Caption'] : ('Mittelwert ' . $rid);
 
-            // rekursive Suche statt GetIDForIdent: die Variable darf vom
-            // Nutzer frei im Objektbaum verschoben werden (z.B. in eine
-            // eigene Kategorie), ohne dass eine doppelte neu angelegt wird.
-            $vid = $this->FindVarByIdent($ident);
-            if (!$vid) {
-                $vid = $this->RegisterVariableFloat($ident, $caption, '', $rid * 2);
+            // Die tatsächliche Objekt-ID wird direkt in der Konfiguration
+            // gespeichert (AvgID/BufID) — dadurch spielt es KEINE Rolle,
+            // wohin der Nutzer die Variable im Objektbaum verschiebt, auch
+            // nicht in den Baum einer völlig anderen Instanz.
+            $vid = (int)($channels[$i]['AvgID'] ?? 0);
+            if (!$vid || !IPS_VariableExists($vid)) {
+                $vid = $this->RegisterVariableFloat('avg_' . $rid, $caption, '', $rid * 2);
+                $channels[$i]['AvgID'] = $vid;
+                $propChanged = true;
             }
             IPS_SetName($vid, $caption);
 
@@ -72,25 +63,42 @@ class RollingAverage extends IPSModule
                 }
             }
 
-            $bid = $this->FindVarByIdent($bufIdent);
-            if (!$bid) {
-                $bid = $this->RegisterVariableString($bufIdent, $caption . ' (Puffer)', '', $rid * 2 + 1);
+            $bid = (int)($channels[$i]['BufID'] ?? 0);
+            if (!$bid || !IPS_VariableExists($bid)) {
+                $bid = $this->RegisterVariableString('buf_' . $rid, $caption . ' (Puffer)', '', $rid * 2 + 1);
                 SetValueString($bid, '[]');
+                $channels[$i]['BufID'] = $bid;
+                $propChanged = true;
             }
             IPS_SetHidden($bid, true);
         }
 
-        // Kanäle, deren Zeile gelöscht wurde, aufräumen
-        foreach ($this->FindOwnIdentsWithPrefix('avg_') as $ident => $id) {
-            if (!in_array($ident, $activeIdents)) {
-                IPS_DeleteVariable($id);
+        if ($propChanged) {
+            $this->WriteAttributeInteger('NextRowID', $nextID);
+            IPS_SetProperty($this->InstanceID, 'Channels', json_encode($channels));
+        }
+
+        // Kanäle, deren Zeile gelöscht wurde, aufräumen — unabhängig davon,
+        // wohin die zugehörigen Variablen im Baum verschoben wurden.
+        $activeIDs = [];
+        foreach ($channels as $ch) {
+            if (!empty($ch['AvgID'])) {
+                $activeIDs[] = (int)$ch['AvgID'];
+            }
+            if (!empty($ch['BufID'])) {
+                $activeIDs[] = (int)$ch['BufID'];
             }
         }
-        foreach ($this->FindOwnIdentsWithPrefix('buf_') as $ident => $id) {
-            if (!in_array($ident, $activeIdents)) {
-                IPS_DeleteVariable($id);
+        $knownIDs = json_decode($this->ReadAttributeString('KnownVarIDs'), true);
+        if (!is_array($knownIDs)) {
+            $knownIDs = [];
+        }
+        foreach ($knownIDs as $oldID) {
+            if (!in_array($oldID, $activeIDs) && IPS_VariableExists($oldID)) {
+                IPS_DeleteVariable($oldID);
             }
         }
+        $this->WriteAttributeString('KnownVarIDs', json_encode($activeIDs));
 
         if (count($channels) === 0) {
             $this->SetTimerInterval('Tick', 0);
@@ -111,19 +119,15 @@ class RollingAverage extends IPSModule
 
         $now = time();
         foreach ($channels as $ch) {
-            $rid = $ch['RowID'] ?? null;
-            if ($rid === null) {
-                continue;
-            }
             $srcID = (int)($ch['SourceID'] ?? 0);
             $windowSec = max(1, (int)($ch['WindowMinutes'] ?? 10)) * 60;
+            $vid = (int)($ch['AvgID'] ?? 0);
+            $bid = (int)($ch['BufID'] ?? 0);
+
             if (!$srcID || !IPS_VariableExists($srcID)) {
                 continue;
             }
-
-            $vid = $this->FindVarByIdent('avg_' . $rid);
-            $bid = $this->FindVarByIdent('buf_' . $rid);
-            if (!$vid || !$bid) {
+            if (!$vid || !IPS_VariableExists($vid) || !$bid || !IPS_VariableExists($bid)) {
                 continue;
             }
 
@@ -143,53 +147,6 @@ class RollingAverage extends IPSModule
             if ($count > 0) {
                 $sum = array_sum(array_column($buffer, 1));
                 SetValueFloat($vid, $sum / $count);
-            }
-        }
-    }
-
-    // Variablen dürfen vom Nutzer frei im Objektbaum verschoben werden
-    // (z.B. in eine eigene Kategorie einsortiert) — GetIDForIdent findet
-    // nur direkte Kinder der Instanz, daher rekursive Suche.
-    private function FindVarByIdent(string $ident): int
-    {
-        return $this->FindIdentRecursive($this->InstanceID, $ident);
-    }
-
-    private function FindIdentRecursive(int $parentID, string $ident): int
-    {
-        foreach (IPS_GetChildrenIDs($parentID) as $childID) {
-            $obj = IPS_GetObject($childID);
-            if ($obj['ObjectIdent'] === $ident) {
-                return $childID;
-            }
-            if ($obj['ObjectType'] === 0) {
-                $found = $this->FindIdentRecursive($childID, $ident);
-                if ($found) {
-                    return $found;
-                }
-            }
-        }
-        return 0;
-    }
-
-    // liefert [ident => objectID] für alle eigenen (auch verschobenen)
-    // Variablen mit dem gegebenen Ident-Präfix
-    private function FindOwnIdentsWithPrefix(string $prefix): array
-    {
-        $result = [];
-        $this->CollectIdentsWithPrefix($this->InstanceID, $prefix, $result);
-        return $result;
-    }
-
-    private function CollectIdentsWithPrefix(int $parentID, string $prefix, array &$result): void
-    {
-        foreach (IPS_GetChildrenIDs($parentID) as $childID) {
-            $obj = IPS_GetObject($childID);
-            if ($obj['ObjectIdent'] !== '' && strpos($obj['ObjectIdent'], $prefix) === 0) {
-                $result[$obj['ObjectIdent']] = $childID;
-            }
-            if ($obj['ObjectType'] === 0) {
-                $this->CollectIdentsWithPrefix($childID, $prefix, $result);
             }
         }
     }
