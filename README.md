@@ -39,11 +39,18 @@ Pro Kanal:
 |---|---|
 | Bezeichnung | Name der erzeugten Mittelwert-Variable |
 | Quelle | Die zu mittelnde Variable |
+| Quelle 2 (optional) | Zweite Variable, die vor der Mittelung mit Quelle 1 verrechnet wird |
+| Verknüpfung | Nur Quelle 1 / Quelle1 + Quelle2 / Quelle1 − Quelle2 |
+| Invertieren | Kehrt das Vorzeichen des verrechneten Momentanwerts um, bevor er in den Puffer geht |
 | Fenster | Zahlenwert der Fenster-Dauer |
 | Einheit | Sekunden / Minuten / Stunden / Tage |
 | Methode | Berechnungsart (siehe unten) |
 
 Zeilen können per Drag & Drop umsortiert werden.
+
+### Zwei Quellen verrechnen
+
+Soll ein Mittelwert aus der Verknüpfung zweier Variablen gebildet werden (z. B. ein PV-Überschuss = −(Erzeugung + Bezug)), sollte man **erst verrechnen, dann mitteln** — nicht zwei getrennte Mittelwerte bilden und danach kombinieren. Das Modul macht genau das: Quelle 2, Verknüpfung und Invertieren wirken auf den Momentanwert, bevor er in den Ringpuffer geschrieben wird. Es reicht dafür ein einziger Kanal.
 
 ### Berechnungsmethoden
 

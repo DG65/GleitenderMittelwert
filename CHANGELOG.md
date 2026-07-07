@@ -3,6 +3,11 @@
 Alle nennenswerten Änderungen an diesem Modul werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [1.4.0] - 2026-07-07
+
+### Added
+- Optionale zweite Quelle pro Kanal: Verknüpfung (Nur Quelle 1 / Addition / Subtraktion) und Invertieren, wirkt auf den Momentanwert **vor** der Pufferung/Mittelung. Ermöglicht z. B. einen PV-Überschuss-Mittelwert (−(Erzeugung + Bezug)) mit einem einzigen Kanal statt zwei getrennten Mittelwerten plus externer Kombination.
+
 ## [1.3.1] - 2026-07-03
 
 ### Fixed

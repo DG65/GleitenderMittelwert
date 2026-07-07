@@ -160,7 +160,7 @@ class RollingAverage extends IPSModule
                 $buffer = [];
             }
 
-            $buffer[] = [$now, (float)GetValue($srcID)];
+            $buffer[] = [$now, $this->InstantValue($ch, $srcID)];
             $buffer = array_values(array_filter($buffer, function ($e) use ($now, $windowSec) {
                 return ($now - $e[0]) <= $windowSec;
             }));
@@ -173,6 +173,28 @@ class RollingAverage extends IPSModule
                 SetValueFloat($vid, $avg);
             }
         }
+    }
+
+    // Momentanwert VOR der Pufferung: optional mit einer zweiten Quelle
+    // verknüpft (Addition/Subtraktion) und/oder invertiert. Damit lässt
+    // sich z.B. "-(Quelle1 + Quelle2)" bilden und erst DANACH mitteln —
+    // sauberer als zwei getrennte Mittelwerte hinterher zu kombinieren.
+    private function InstantValue(array $ch, int $srcID): float
+    {
+        $value = (float)GetValue($srcID);
+
+        $src2 = (int)($ch['SourceID2'] ?? 0);
+        $combineMode = (int)($ch['CombineMode'] ?? 0);
+        if ($src2 && $combineMode !== 0 && IPS_VariableExists($src2)) {
+            $value2 = (float)GetValue($src2);
+            $value = ($combineMode === 2) ? ($value - $value2) : ($value + $value2);
+        }
+
+        if (!empty($ch['Invert'])) {
+            $value *= -1;
+        }
+
+        return $value;
     }
 
     // Mode 0 = Arithmetisch, 1 = Zeitgewichtet, 2 = Median, 3 = Minimum,

@@ -40,6 +40,50 @@
               "save": true
             },
             {
+              "caption": "Quelle 2 (optional)",
+              "name": "SourceID2",
+              "width": "220px",
+              "add": 0,
+              "edit": {
+                "type": "SelectVariable"
+              },
+              "save": true
+            },
+            {
+              "caption": "Verknüpfung",
+              "name": "CombineMode",
+              "width": "130px",
+              "add": 0,
+              "edit": {
+                "type": "Select",
+                "options": [
+                  {
+                    "caption": "Nur Quelle 1",
+                    "value": 0
+                  },
+                  {
+                    "caption": "Quelle1 + Quelle2",
+                    "value": 1
+                  },
+                  {
+                    "caption": "Quelle1 - Quelle2",
+                    "value": 2
+                  }
+                ]
+              },
+              "save": true
+            },
+            {
+              "caption": "Invertieren",
+              "name": "Invert",
+              "width": "90px",
+              "add": false,
+              "edit": {
+                "type": "CheckBox"
+              },
+              "save": true
+            },
+            {
               "caption": "Fenster",
               "name": "WindowValue",
               "width": "90px",
@@ -157,6 +201,10 @@
             {
               "type": "Label",
               "caption": "Summe: aufsummierte statt gemittelte Werte im Fenster."
+            },
+            {
+              "type": "Label",
+              "caption": "Quelle 2/Verknüpfung/Invertieren: verrechnet zwei Quellen VOR der Mittelung (z.B. -(Quelle1+Quelle2))."
             }
           ]
         }
