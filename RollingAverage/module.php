@@ -72,13 +72,20 @@ class RollingAverage extends IPSModule
             }
             IPS_SetName($vid, $caption);
 
-            // Mittelwert bekommt dasselbe Profil (Einheit/Format) wie die Quelle
+            // Mittelwert bekommt dasselbe Profil (Einheit/Format) wie die
+            // Quelle — aber nur, wenn das Profil selbst auch für Float
+            // gilt (die Mittelwert-Variable ist immer Float; ein Profil
+            // vom Typ Integer/Boolean/String führt sonst zu "Warning:
+            // Variablentyp und Profiltyp stimmen nicht überein").
             $srcID = (int)($ch['SourceID'] ?? 0);
             if ($srcID && IPS_VariableExists($srcID)) {
                 $srcVar = IPS_GetVariable($srcID);
                 $profile = $srcVar['VariableCustomProfile'] !== '' ? $srcVar['VariableCustomProfile'] : $srcVar['VariableProfile'];
-                if ($profile !== '') {
-                    IPS_SetVariableCustomProfile($vid, $profile);
+                if ($profile !== '' && IPS_VariableProfileExists($profile)) {
+                    $profileInfo = IPS_GetVariableProfile($profile);
+                    if ($profileInfo['ProfileType'] === VARIABLETYPE_FLOAT) {
+                        IPS_SetVariableCustomProfile($vid, $profile);
+                    }
                 }
             }
 

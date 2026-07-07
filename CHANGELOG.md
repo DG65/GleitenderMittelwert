@@ -3,6 +3,11 @@
 Alle nennenswerten Änderungen an diesem Modul werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [1.3.1] - 2026-07-03
+
+### Fixed
+- Profil der Quellvariable wird nur übernommen, wenn es selbst vom Typ Float ist — Quellen mit Integer-/Boolean-Profil (z. B. `GoodweET.WattEMS`) führten sonst zum Fehler "Variablentyp und Profiltyp stimmen nicht überein" beim Übernehmen
+
 ## [1.3.0] - 2026-07-03
 
 ### Added
