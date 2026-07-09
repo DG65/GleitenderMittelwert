@@ -3,6 +3,11 @@
 Alle nennenswerten Änderungen an diesem Modul werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [1.4.1] - 2026-07-07
+
+### Fixed
+- `vendor` in module.json auf leeren String korrigiert (Symcon-Review-Feedback): das Feld ist für den Hersteller des angebundenen Systems vorgesehen, nicht den Modulautor — für ein reines Hilfsmodul ohne angebundenes Fremdsystem bleibt es leer
+
 ## [1.4.0] - 2026-07-07
 
 ### Added
