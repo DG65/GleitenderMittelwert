@@ -3,6 +3,11 @@
 Alle nennenswerten Änderungen an diesem Modul werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [1.5.4] - 2026-07-09
+
+### Changed
+- Spalte "Quelle" nutzt jetzt `width: auto` und füllt den verbleibenden Platz der Liste — bessere Lesbarkeit langer Variablenpfade, ohne Pixel-Summen von Hand abstimmen zu müssen
+
 ## [1.5.3] - 2026-07-09
 
 ### Fixed
