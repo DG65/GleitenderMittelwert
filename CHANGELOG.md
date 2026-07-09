@@ -3,6 +3,11 @@
 Alle nennenswerten Änderungen an diesem Modul werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [1.5.1] - 2026-07-09
+
+### Changed
+- Formular-Layout überarbeitet: Kanal-Liste geht wieder über die volle Breite (kein Nebeneinander mit dem Doku-Panel mehr), Doku-Panel steht jetzt oben und ist standardmäßig eingeklappt
+
 ## [1.5.0] - 2026-07-09
 
 ### Added
