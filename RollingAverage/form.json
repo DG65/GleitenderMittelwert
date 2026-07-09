@@ -62,7 +62,7 @@
         {
           "caption": "Bezeichnung",
           "name": "Caption",
-          "width": "200px",
+          "width": "15%",
           "add": "Neuer Mittelwert",
           "edit": {
             "type": "ValidationTextBox"
@@ -72,7 +72,7 @@
         {
           "caption": "Quelle",
           "name": "SourceID",
-          "width": "260px",
+          "width": "17%",
           "add": 0,
           "edit": {
             "type": "SelectVariable"
@@ -82,7 +82,7 @@
         {
           "caption": "Quelle 2 (optional)",
           "name": "SourceID2",
-          "width": "220px",
+          "width": "15%",
           "add": 0,
           "edit": {
             "type": "SelectVariable"
@@ -92,7 +92,7 @@
         {
           "caption": "Verknüpfung",
           "name": "CombineMode",
-          "width": "130px",
+          "width": "10%",
           "add": 0,
           "edit": {
             "type": "Select",
@@ -116,7 +116,7 @@
         {
           "caption": "Invertieren",
           "name": "Invert",
-          "width": "90px",
+          "width": "6%",
           "add": false,
           "edit": {
             "type": "CheckBox"
@@ -126,7 +126,7 @@
         {
           "caption": "Fenster",
           "name": "WindowValue",
-          "width": "90px",
+          "width": "6%",
           "add": 10,
           "edit": {
             "type": "NumberSpinner",
@@ -138,7 +138,7 @@
         {
           "caption": "Einheit",
           "name": "WindowUnit",
-          "width": "130px",
+          "width": "10%",
           "add": 1,
           "edit": {
             "type": "Select",
@@ -166,7 +166,7 @@
         {
           "caption": "Methode",
           "name": "Mode",
-          "width": "140px",
+          "width": "10%",
           "add": 0,
           "edit": {
             "type": "Select",
@@ -210,7 +210,7 @@
         {
           "caption": "Nachkommastellen",
           "name": "Digits",
-          "width": "130px",
+          "width": "10%",
           "add": -1,
           "edit": {
             "type": "Select",

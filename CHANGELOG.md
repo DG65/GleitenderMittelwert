@@ -3,6 +3,11 @@
 Alle nennenswerten Änderungen an diesem Modul werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [1.5.2] - 2026-07-09
+
+### Changed
+- Spaltenbreiten der Kanal-Liste auf Prozentwerte umgestellt, damit die Liste immer die volle Breite ausfüllt (gleiche Breite wie das Doku-Panel), unabhängig von der Bildschirmgröße
+
 ## [1.5.1] - 2026-07-09
 
 ### Changed
