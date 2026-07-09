@@ -3,6 +3,11 @@
 Alle nennenswerten Änderungen an diesem Modul werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [1.5.3] - 2026-07-09
+
+### Fixed
+- Prozent-Spaltenbreiten aus 1.5.2 zurückgenommen — führten zu einer Liste, die breiter als der Bildschirm war, und schoben "Nachkommastellen" aus dem sichtbaren Bereich. Zurück zu festen, kompakteren Pixel-Breiten (Summe ~1160px), damit alle Spalten ohne horizontales Scrollen sichtbar sind
+
 ## [1.5.2] - 2026-07-09
 
 ### Changed
