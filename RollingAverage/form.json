@@ -166,6 +166,42 @@
                 ]
               },
               "save": true
+            },
+            {
+              "caption": "Nachkommastellen",
+              "name": "Digits",
+              "width": "130px",
+              "add": -1,
+              "edit": {
+                "type": "Select",
+                "options": [
+                  {
+                    "caption": "Automatisch (Quellprofil)",
+                    "value": -1
+                  },
+                  {
+                    "caption": "0",
+                    "value": 0
+                  },
+                  {
+                    "caption": "1",
+                    "value": 1
+                  },
+                  {
+                    "caption": "2",
+                    "value": 2
+                  },
+                  {
+                    "caption": "3",
+                    "value": 3
+                  },
+                  {
+                    "caption": "4",
+                    "value": 4
+                  }
+                ]
+              },
+              "save": true
             }
           ]
         },
@@ -205,6 +241,10 @@
             {
               "type": "Label",
               "caption": "Quelle 2/Verknüpfung/Invertieren: verrechnet zwei Quellen VOR der Mittelung (z.B. -(Quelle1+Quelle2))."
+            },
+            {
+              "type": "Label",
+              "caption": "Nachkommastellen: 'Automatisch' übernimmt das Profil der Quelle (falls vorhanden). Feste Anzahl überschreibt das und greift auch, wenn die Quelle kein Profil hat."
             }
           ]
         }

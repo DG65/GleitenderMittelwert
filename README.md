@@ -45,6 +45,7 @@ Pro Kanal:
 | Fenster | Zahlenwert der Fenster-Dauer |
 | Einheit | Sekunden / Minuten / Stunden / Tage |
 | Methode | Berechnungsart (siehe unten) |
+| Nachkommastellen | „Automatisch" übernimmt das Profil der Quelle (falls vorhanden); eine feste Zahl (0–4) überschreibt das und greift auch, wenn die Quelle kein Profil hat |
 
 Zeilen können per Drag & Drop umsortiert werden.
 

@@ -3,6 +3,11 @@
 Alle nennenswerten Änderungen an diesem Modul werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [1.5.0] - 2026-07-09
+
+### Added
+- Nachkommastellen pro Kanal konfigurierbar (0–4 oder "Automatisch"). Erzeugt bei fester Anzahl ein eigenes Nachkommastellen-Profil und überschreibt damit die automatische Profil-Übernahme — hilft besonders, wenn die Quellvariable selbst kein Profil besitzt (Standardformatierung zeigt sonst viele Nachkommastellen)
+
 ## [1.4.1] - 2026-07-07
 
 ### Fixed
