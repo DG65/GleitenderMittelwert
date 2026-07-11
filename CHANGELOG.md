@@ -3,6 +3,12 @@
 Alle nennenswerten Änderungen an diesem Modul werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [1.7.0] - 2026-07-11
+
+### Added
+- Formeln für jede der 8 Berechnungsmethoden im Doku-Panel und in der README ergänzt
+- Kleines Diagramm je Berechnungsmethode (im Formular als eingebettetes Bild, in der README als Datei unter `docs/img/`) zur Veranschaulichung
+
 ## [1.6.0] - 2026-07-09
 
 ### Changed
