@@ -43,6 +43,45 @@ class RollingAverage extends IPSModule
         return max(1, (int)round($value * $mult));
     }
 
+    // Ermittelt das Standardprofil für eine NEU anzulegende Mittelwert-
+    // Variable. Wird nur bei der Erstanlage aufgerufen (siehe ApplyChanges).
+    private function ResolveProfile(array $ch): string
+    {
+        $digits = (int)($ch['Digits'] ?? -1);
+        if ($digits >= 0) {
+            // Feste Nachkommastellen angefordert — eigenes, reines
+            // Nachkommastellen-Profil (keine Einheit), greift auch wenn
+            // die Quelle gar kein Profil hat.
+            $digitsProfile = 'RAVG.Digits' . $digits;
+            if (!IPS_VariableProfileExists($digitsProfile)) {
+                IPS_CreateVariableProfile($digitsProfile, VARIABLETYPE_FLOAT);
+                IPS_SetVariableProfileValues($digitsProfile, -1000000000, 1000000000, 0);
+            }
+            IPS_SetVariableProfileDigits($digitsProfile, $digits);
+            return $digitsProfile;
+        }
+
+        // Automatisch: Mittelwert bekommt dasselbe Profil (Einheit/Format)
+        // wie die Quelle — aber nur, wenn das Profil selbst auch für Float
+        // gilt (die Mittelwert-Variable ist immer Float; ein Profil vom
+        // Typ Integer/Boolean/String führt sonst zu "Warning: Variablentyp
+        // und Profiltyp stimmen nicht überein"). Hat die Quelle kein
+        // Profil, bleibt die Mittelwert-Variable ebenfalls ohne Profil.
+        $srcID = (int)($ch['SourceID'] ?? 0);
+        if ($srcID && IPS_VariableExists($srcID)) {
+            $srcVar = IPS_GetVariable($srcID);
+            $profile = $srcVar['VariableCustomProfile'] !== '' ? $srcVar['VariableCustomProfile'] : $srcVar['VariableProfile'];
+            if ($profile !== '' && IPS_VariableProfileExists($profile)) {
+                $profileInfo = IPS_GetVariableProfile($profile);
+                if ($profileInfo['ProfileType'] === VARIABLETYPE_FLOAT) {
+                    return $profile;
+                }
+            }
+        }
+
+        return '';
+    }
+
     public function ApplyChanges()
     {
         parent::ApplyChanges();
@@ -67,42 +106,15 @@ class RollingAverage extends IPSModule
             $vid = (int)($entry['AvgID'] ?? 0);
             $bid = (int)($entry['BufID'] ?? 0);
 
+            // Profil nur bei der Erstanlage setzen (als Standardprofil über
+            // RegisterVariableFloat) — ein bestehendes Custom-Profil ist die
+            // Hoheit des Nutzers und wird bei weiteren ApplyChanges-Läufen
+            // nicht mehr angetastet (Symcon-Review-Feedback, Juli 2026).
             if (!$vid || !IPS_VariableExists($vid)) {
-                $vid = $this->RegisterVariableFloat('avg_' . $seq, $caption, '', $i * 2);
+                $profile = $this->ResolveProfile($ch);
+                $vid = $this->RegisterVariableFloat('avg_' . $seq, $caption, $profile, $i * 2);
             }
             IPS_SetName($vid, $caption);
-
-            $srcID = (int)($ch['SourceID'] ?? 0);
-            $digits = (int)($ch['Digits'] ?? -1);
-            if ($digits >= 0) {
-                // Feste Nachkommastellen angefordert — eigenes, reines
-                // Nachkommastellen-Profil (keine Einheit) erzeugen/nutzen.
-                // Überschreibt eine eventuelle Profil-Übernahme von der
-                // Quelle, greift auch wenn die Quelle gar kein Profil hat.
-                $digitsProfile = 'RAVG.Digits' . $digits;
-                if (!IPS_VariableProfileExists($digitsProfile)) {
-                    IPS_CreateVariableProfile($digitsProfile, VARIABLETYPE_FLOAT);
-                    IPS_SetVariableProfileValues($digitsProfile, -1000000000, 1000000000, 0);
-                }
-                IPS_SetVariableProfileDigits($digitsProfile, $digits);
-                IPS_SetVariableCustomProfile($vid, $digitsProfile);
-            } elseif ($srcID && IPS_VariableExists($srcID)) {
-                // Automatisch: Mittelwert bekommt dasselbe Profil (Einheit/
-                // Format) wie die Quelle — aber nur, wenn das Profil selbst
-                // auch für Float gilt (die Mittelwert-Variable ist immer
-                // Float; ein Profil vom Typ Integer/Boolean/String führt
-                // sonst zu "Warning: Variablentyp und Profiltyp stimmen
-                // nicht überein"). Hat die Quelle kein Profil, bleibt die
-                // Mittelwert-Variable ebenfalls ohne Profil.
-                $srcVar = IPS_GetVariable($srcID);
-                $profile = $srcVar['VariableCustomProfile'] !== '' ? $srcVar['VariableCustomProfile'] : $srcVar['VariableProfile'];
-                if ($profile !== '' && IPS_VariableProfileExists($profile)) {
-                    $profileInfo = IPS_GetVariableProfile($profile);
-                    if ($profileInfo['ProfileType'] === VARIABLETYPE_FLOAT) {
-                        IPS_SetVariableCustomProfile($vid, $profile);
-                    }
-                }
-            }
 
             if (!$bid || !IPS_VariableExists($bid)) {
                 $bid = $this->RegisterVariableString('buf_' . $seq, $caption . ' (Puffer)', '', $i * 2 + 1);

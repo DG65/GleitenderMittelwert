@@ -3,6 +3,11 @@
 Alle nennenswerten Änderungen an diesem Modul werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [1.6.0] - 2026-07-09
+
+### Changed
+- Profil-Zuweisung erfolgt jetzt nur noch bei der Erstanlage der Mittelwert-Variable (als Standardprofil über `RegisterVariableFloat`), statt bei jedem `ApplyChanges` per `IPS_SetVariableCustomProfile` zu überschreiben (Symcon-Review-Feedback: benutzerdefinierte Profile sind die Hoheit des Nutzers)
+
 ## [1.5.4] - 2026-07-09
 
 ### Changed
