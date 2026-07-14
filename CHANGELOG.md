@@ -3,6 +3,11 @@
 Alle nennenswerten Änderungen an diesem Modul werden hier dokumentiert.
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [1.7.1] - 2026-07-11
+
+### Changed
+- Autor in `library.json` von "Dietmar Gureth" auf "DG65" geändert
+
 ## [1.7.0] - 2026-07-11
 
 ### Added
